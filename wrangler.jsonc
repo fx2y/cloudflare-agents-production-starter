@@ -116,6 +116,14 @@
       {
         "name": "WEBSOCKET_STREAMING_AGENT",
         "class_name": "WebSocketStreamingAgent"
+      },
+      {
+        "name": "HTTP_ECHO_AGENT",
+        "class_name": "HttpEchoAgent"
+      },
+      {
+        "name": "RESILIENT_CHAT_AGENT",
+        "class_name": "ResilientChatAgent"
       }
     ]
   },
@@ -215,6 +223,13 @@
       "tag": "v10",
       "new_sqlite_classes": [
         "WebSocketStreamingAgent"
+      ]
+    },
+    {
+      "tag": "v11",
+      "new_sqlite_classes": [
+        "HttpEchoAgent",
+        "ResilientChatAgent"
       ]
     }
   ]

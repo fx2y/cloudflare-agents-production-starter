@@ -23,6 +23,8 @@ import type { LoggingAgent } from './agents/LoggingAgent';
 import type { ChatHistoryAgent } from './agents/ChatHistoryAgent';
 import type { SecretAgent } from './agents/SecretAgent';
 import type { WebSocketStreamingAgent } from './agents/WebSocketStreamingAgent';
+import type { HttpEchoAgent } from './agents/HttpEchoAgent';
+import type { ResilientChatAgent } from './agents/ResilientChatAgent';
 import type { HITLAgent } from './agents/HITLAgent';
 import type { StatefulCalculatorAgent } from './agents/StatefulCalculatorAgent';
 import type { PersistentCounterAgent } from './agents/PersistentCounterAgent';
@@ -78,6 +80,12 @@ export interface WorkerEnv {
   
   // Streaming agents
   WEBSOCKET_STREAMING_AGENT: AgentNamespace<WebSocketStreamingAgent>;
+  
+  // HTTP Echo agent
+  HTTP_ECHO_AGENT: AgentNamespace<HttpEchoAgent>;
+  
+  // Resilient Chat agent
+  RESILIENT_CHAT_AGENT: AgentNamespace<ResilientChatAgent>;
   
   // Advanced agents
   HITL_AGENT: AgentNamespace<HITLAgent>;

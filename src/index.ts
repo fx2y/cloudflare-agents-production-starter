@@ -30,6 +30,8 @@ import { LoggingAgent } from './agents/LoggingAgent';
 import { ChatHistoryAgent } from './agents/ChatHistoryAgent';
 import { SecretAgent } from './agents/SecretAgent';
 import { WebSocketStreamingAgent } from './agents/WebSocketStreamingAgent';
+import { HttpEchoAgent } from './agents/HttpEchoAgent';
+import { ResilientChatAgent } from './agents/ResilientChatAgent';
 import { handleAuthDefault } from './auth-handler';
 export type { WorkerEnv } from './types';
 import type { WorkerEnv, BrowserRequestPayload } from './types';
@@ -240,6 +242,13 @@ app.get('/secret-agent/:id', createAgentRoute('SECRET_AGENT', SecretAgent));
 
 // WebSocket Streaming agent route
 app.get('/agent/websocket-streaming-agent/:id', createAgentRoute('WEBSOCKET_STREAMING_AGENT', WebSocketStreamingAgent, true));
+
+// HTTP Echo agent route
+app.all('/agent/http-echo-agent/:id', createAgentRoute('HTTP_ECHO_AGENT', HttpEchoAgent));
+
+// Resilient Chat agent route
+app.get('/agent/resilient-chat-agent/:id', createAgentRoute('RESILIENT_CHAT_AGENT', ResilientChatAgent, true));
+app.get('/resilient-chat-agent/:id/get-state', createAgentRoute('RESILIENT_CHAT_AGENT', ResilientChatAgent));
 // Tool agents
 app.post('/tool/github/:owner/:repo', async (c) => {
   const owner = c.req.param('owner');
@@ -339,3 +348,5 @@ export { LoggingAgent } from './agents/LoggingAgent';
 export { ChatHistoryAgent } from './agents/ChatHistoryAgent';
 export { SecretAgent } from './agents/SecretAgent';
 export { WebSocketStreamingAgent } from './agents/WebSocketStreamingAgent';
+export { HttpEchoAgent } from './agents/HttpEchoAgent';
+export { ResilientChatAgent } from './agents/ResilientChatAgent';

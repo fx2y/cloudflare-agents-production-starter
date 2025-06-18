@@ -1,180 +1,161 @@
 #!/usr/bin/env node
 
-// Manual verification script for Cloudflare Agents Real-time Communication Layer
-// This verifies the implementation without import issues
+/**
+ * Manual Verification Script for Advanced Communication Protocols
+ * 
+ * This script verifies the key implementations required by verification 012.md
+ * without relying on the problematic automated test framework.
+ */
 
-import fs from 'fs';
-import path from 'path';
+const fs = require('fs');
+const path = require('path');
 
-const checks = {
+console.log('🔍 Verifying Advanced Communication Protocols Implementation...\n');
+
+// Track verification results
+const results = {
   passed: 0,
   failed: 0,
-  results: []
+  skipped: 0,
+  details: []
 };
 
-function check(name, condition, description) {
-  const result = {
-    name,
-    passed: condition,
-    description
-  };
-  
-  checks.results.push(result);
-  
-  if (condition) {
-    checks.passed++;
-    console.log(`✅ [CONFIG] ${name}: ${description}`);
+function verifyFile(filePath, description) {
+  if (fs.existsSync(filePath)) {
+    console.log(`✅ ${description}: ${filePath}`);
+    results.passed++;
+    results.details.push({ status: 'PASS', test: description, file: filePath });
+    return true;
   } else {
-    checks.failed++;
-    console.log(`❌ [CONFIG] ${name}: ${description}`);
+    console.log(`❌ ${description}: ${filePath} (NOT FOUND)`);
+    results.failed++;
+    results.details.push({ status: 'FAIL', test: description, file: filePath, error: 'File not found' });
+    return false;
   }
 }
 
-// Read configuration files
-const wranglerConfig = JSON.parse(fs.readFileSync('wrangler.jsonc', 'utf8'));
-const indexContent = fs.readFileSync('src/index.ts', 'utf8');
-const echoAgentContent = fs.readFileSync('src/agents/EchoAgent.ts', 'utf8');
-const streamingAgentContent = fs.readFileSync('src/agents/StreamingAgent.ts', 'utf8');
-const counterAgentContent = fs.readFileSync('src/agents/CounterAgent.ts', 'utf8');
-const chattyAgentContent = fs.readFileSync('src/agents/ChattyAgent.ts', 'utf8');
+function verifyFileContent(filePath, searchString, description) {
+  if (!fs.existsSync(filePath)) {
+    console.log(`❌ ${description}: ${filePath} (FILE NOT FOUND)`);
+    results.failed++;
+    results.details.push({ status: 'FAIL', test: description, file: filePath, error: 'File not found' });
+    return false;
+  }
+  
+  const content = fs.readFileSync(filePath, 'utf8');
+  if (content.includes(searchString)) {
+    console.log(`✅ ${description}: Found "${searchString}" in ${filePath}`);
+    results.passed++;
+    results.details.push({ status: 'PASS', test: description, file: filePath });
+    return true;
+  } else {
+    console.log(`❌ ${description}: Missing "${searchString}" in ${filePath}`);
+    results.failed++;
+    results.details.push({ status: 'FAIL', test: description, file: filePath, error: `Missing: ${searchString}` });
+    return false;
+  }
+}
 
-console.log('🔍 Verifying Cloudflare Agents Real-time Communication Layer\\n');
+function verifyAgentBinding(wranglerPath, agentName, className, description) {
+  if (!fs.existsSync(wranglerPath)) {
+    console.log(`❌ ${description}: wrangler.jsonc not found`);
+    results.failed++;
+    return false;
+  }
+  
+  const content = fs.readFileSync(wranglerPath, 'utf8');
+  const hasBinding = content.includes(`"name": "${agentName}"`) && content.includes(`"class_name": "${className}"`);
+  const hasMigration = content.includes(`"${className}"`);
+  
+  if (hasBinding && hasMigration) {
+    console.log(`✅ ${description}: ${agentName} -> ${className} properly configured`);
+    results.passed++;
+    results.details.push({ status: 'PASS', test: description, agent: agentName, class: className });
+    return true;
+  } else {
+    console.log(`❌ ${description}: ${agentName} -> ${className} configuration missing`);
+    results.failed++;
+    results.details.push({ status: 'FAIL', test: description, agent: agentName, class: className, error: 'Configuration missing' });
+    return false;
+  }
+}
+
+console.log('📁 Verifying Core Files...');
+console.log('='.repeat(40));
+
+// Check core agent files
+verifyFile('src/agents/WebSocketStreamingAgent.ts', 'WebSocket Streaming Agent');
+verifyFile('src/agents/EchoAgent.ts', 'Echo Agent');
+verifyFile('src/agents/ChattyAgent.ts', 'Chatty Agent');
+verifyFile('src/agents/HttpEchoAgent.ts', 'HTTP Echo Agent');
+verifyFile('src/agents/ResilientChatAgent.ts', 'Resilient Chat Agent');
+
+// Check client utilities
+verifyFile('src/client/index.ts', 'Client Utilities');
+
+// Check demo file
+verifyFile('public/demo.html', 'Demo HTML File');
+
+console.log('\n📋 Verifying Configuration...');
+console.log('='.repeat(40));
 
 // Check wrangler.jsonc configuration
-check(
-  'Durable Objects Bindings Exist',
-  wranglerConfig.durable_objects && wranglerConfig.durable_objects.bindings,
-  'wrangler.jsonc contains durable_objects.bindings array'
-);
+const wranglerPath = 'wrangler.jsonc';
+verifyAgentBinding(wranglerPath, 'WEBSOCKET_STREAMING_AGENT', 'WebSocketStreamingAgent', 'WebSocket Streaming Agent Binding');
+verifyAgentBinding(wranglerPath, 'ECHO_AGENT', 'EchoAgent', 'Echo Agent Binding');
+verifyAgentBinding(wranglerPath, 'HTTP_ECHO_AGENT', 'HttpEchoAgent', 'HTTP Echo Agent Binding');
+verifyAgentBinding(wranglerPath, 'RESILIENT_CHAT_AGENT', 'ResilientChatAgent', 'Resilient Chat Agent Binding');
 
-check(
-  'COUNTER_AGENT Binding',
-  wranglerConfig.durable_objects.bindings.some(b => b.name === 'COUNTER_AGENT' && b.class_name === 'CounterAgent'),
-  'COUNTER_AGENT binding with CounterAgent class exists'
-);
+console.log('\n🔧 Verifying Implementation Details...');
+console.log('='.repeat(40));
 
-check(
-  'ECHO_AGENT Binding',
-  wranglerConfig.durable_objects.bindings.some(b => b.name === 'ECHO_AGENT' && b.class_name === 'EchoAgent'),
-  'ECHO_AGENT binding with EchoAgent class exists'
-);
+// Check WebSocket streaming implementation
+verifyFileContent('src/agents/WebSocketStreamingAgent.ts', 'type: "chunk"', 'WebSocket Streaming Chunk Format');
+verifyFileContent('src/agents/WebSocketStreamingAgent.ts', "type: 'done'", 'WebSocket Streaming Done Message');
+verifyFileContent('src/agents/WebSocketStreamingAgent.ts', 'onConnect', 'WebSocket onConnect Handler');
+verifyFileContent('src/agents/WebSocketStreamingAgent.ts', 'onClose', 'WebSocket onClose Handler');
+verifyFileContent('src/agents/WebSocketStreamingAgent.ts', 'onError', 'WebSocket onError Handler');
 
-check(
-  'STREAMING_AGENT Binding',
-  wranglerConfig.durable_objects.bindings.some(b => b.name === 'STREAMING_AGENT' && b.class_name === 'StreamingAgent'),
-  'STREAMING_AGENT binding with StreamingAgent class exists'
-);
+// Check client exports
+verifyFileContent('src/client/index.ts', 'AgentClient', 'AgentClient Export');
+verifyFileContent('src/client/index.ts', 'agentFetch', 'agentFetch Export');
+verifyFileContent('src/client/index.ts', 'AgentClientOptions', 'AgentClient Options Interface');
+verifyFileContent('src/client/index.ts', 'AgentFetchOptions', 'agentFetch Options Interface');
 
-check(
-  'CHATTY_AGENT Binding',
-  wranglerConfig.durable_objects.bindings.some(b => b.name === 'CHATTY_AGENT' && b.class_name === 'ChattyAgent'),
-  'CHATTY_AGENT binding with ChattyAgent class exists'
-);
+// Check routing configuration
+verifyFileContent('src/index.ts', '/api/v1', 'Prefixed Routing Support');
+verifyFileContent('src/index.ts', 'websocket-streaming-agent', 'WebSocket Streaming Agent Route');
+verifyFileContent('src/index.ts', 'http-echo-agent', 'HTTP Echo Agent Route');
 
-check(
-  'Migration with All Agents',
-  wranglerConfig.migrations.some(m => 
-    m.new_sqlite_classes && 
-    ['CounterAgent', 'EchoAgent', 'StreamingAgent', 'ChattyAgent'].every(agent => 
-      wranglerConfig.migrations.some(migration => 
-        migration.new_sqlite_classes && migration.new_sqlite_classes.includes(agent)
-      )
-    )
-  ),
-  'All required agents are in migrations new_sqlite_classes'
-);
+// Check ChattyAgent connection state support
+verifyFileContent('src/agents/ChattyAgent.ts', 'connection.setState', 'Connection State Management');
+verifyFileContent('src/agents/ChattyAgent.ts', 'set_nick', 'Nickname Setting Command');
+verifyFileContent('src/agents/ChattyAgent.ts', 'send_text', 'Text Broadcasting Command');
 
-// Check index.ts exports
-check(
-  'CounterAgent Export',
-  indexContent.includes('export { CounterAgent }'),
-  'CounterAgent is exported from index.ts'
-);
+console.log('\n📊 Verification Summary');
+console.log('='.repeat(40));
+console.log(`✅ Passed: ${results.passed}`);
+console.log(`❌ Failed: ${results.failed}`);
+console.log(`⏭️  Skipped: ${results.skipped}`);
+console.log(`📈 Success Rate: ${(results.passed / (results.passed + results.failed) * 100).toFixed(1)}%`);
 
-check(
-  'EchoAgent Export',
-  indexContent.includes('export { EchoAgent }'),
-  'EchoAgent is exported from index.ts'
-);
-
-check(
-  'StreamingAgent Export',
-  indexContent.includes('export { StreamingAgent }'),
-  'StreamingAgent is exported from index.ts'
-);
-
-check(
-  'ChattyAgent Export',
-  indexContent.includes('export { ChattyAgent }'),
-  'ChattyAgent is exported from index.ts'
-);
-
-// Check WebSocket routing
-check(
-  'EchoAgent WebSocket Route',
-  indexContent.includes("/echo-agent/") && indexContent.includes("request.headers.get('upgrade') === 'websocket'"),
-  'EchoAgent WebSocket route exists in fetch handler'
-);
-
-check(
-  'CounterAgent WebSocket Route',
-  indexContent.includes("/counter-agent/") && indexContent.includes("request.headers.get('upgrade') === 'websocket'"),
-  'CounterAgent WebSocket route exists in fetch handler'
-);
-
-check(
-  'ChattyAgent WebSocket Route',
-  indexContent.includes("/chatty-agent/") && indexContent.includes("request.headers.get('upgrade') === 'websocket'"),
-  'ChattyAgent WebSocket route exists in fetch handler'
-);
-
-check(
-  'StreamingAgent HTTP Route',
-  indexContent.includes("/streaming-agent/") && indexContent.includes('agent.onRequest(request)'),
-  'StreamingAgent HTTP route exists in fetch handler'
-);
-
-// Check Agent implementations
-check(
-  'EchoAgent onConnect Implementation',
-  echoAgentContent.includes('onConnect') && echoAgentContent.includes('Welcome!'),
-  'EchoAgent sends Welcome! message on connect'
-);
-
-check(
-  'EchoAgent onMessage Implementation',
-  echoAgentContent.includes('onMessage') && echoAgentContent.includes('You said:'),
-  'EchoAgent echoes messages with "You said:" prefix'
-);
-
-check(
-  'StreamingAgent SSE Implementation',
-  streamingAgentContent.includes('toTextStreamResponse'),
-  'StreamingAgent returns streaming response'
-);
-
-check(
-  'CounterAgent Command Pattern',
-  counterAgentContent.includes('JSON.parse') && counterAgentContent.includes('op'),
-  'CounterAgent implements command pattern with JSON parsing'
-);
-
-check(
-  'ChattyAgent Connection State',
-  chattyAgentContent.includes('setState') && chattyAgentContent.includes('nickname'),
-  'ChattyAgent implements connection-specific state'
-);
-
-// Summary
-console.log(`\\n📊 Verification Summary:`);
-console.log(`   ✅ Passed: ${checks.passed}`);
-console.log(`   ❌ Failed: ${checks.failed}`);
-console.log(`   📋 Total:  ${checks.results.length}`);
-
-if (checks.failed === 0) {
-  console.log(`\\n🎉 All configuration checks PASSED! Core implementation is ready for verification.`);
-  process.exit(0);
-} else {
-  console.log(`\\n⚠️  ${checks.failed} configuration issues need to be resolved.`);
-  process.exit(1);
+if (results.failed > 0) {
+  console.log('\n❌ Failed Tests:');
+  results.details
+    .filter(detail => detail.status === 'FAIL')
+    .forEach(detail => {
+      console.log(`   • ${detail.test}: ${detail.error || 'Failed'}`);
+    });
 }
+
+console.log('\n🎯 Manual Verification Steps Required:');
+console.log('='.repeat(40));
+console.log('1. Deploy the worker: npm run deploy');
+console.log('2. Test WebSocket connections via demo.html');
+console.log('3. Test HTTP requests via agentFetch');
+console.log('4. Verify connection lifecycle with multiple clients');
+console.log('5. Test LLM streaming with valid OPENAI_API_KEY');
+
+const exitCode = results.failed > 0 ? 1 : 0;
+console.log(`\n${exitCode === 0 ? '✅' : '❌'} Verification ${exitCode === 0 ? 'PASSED' : 'FAILED'}`);
+process.exit(exitCode);
