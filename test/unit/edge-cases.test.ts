@@ -44,8 +44,8 @@ describe('Edge Cases and Error Scenarios', () => {
         const parts = malformedToken.split('.');
         if (parts.length !== 3) throw new Error('Invalid token format');
         try {
-          // This will throw due to invalid base64 characters
-          atob(parts[1]);
+          const decoded = atob(parts[1]);
+          JSON.parse(decoded);
         } catch (error) {
           throw new Error('Invalid token format');
         }
@@ -197,6 +197,8 @@ describe('Edge Cases and Error Scenarios', () => {
       const workingConnection = {
         send: vi.fn(),
         close: vi.fn(),
+        setState: vi.fn(),
+        state: {},
         id: 'working-conn'
       };
 
@@ -205,6 +207,8 @@ describe('Edge Cases and Error Scenarios', () => {
           throw new Error('Connection broken');
         }),
         close: vi.fn(),
+        setState: vi.fn(),
+        state: {},
         id: 'broken-conn'
       };
 
@@ -215,6 +219,7 @@ describe('Edge Cases and Error Scenarios', () => {
       
       // Should handle partial broadcast failures
       if (agent.onMessage) {
+        // Use valid ChattyAgent message format
         await agent.onMessage(workingConnection as any, JSON.stringify({ op: 'send_text', text: 'test message' }));
         
         // At least one send should be attempted

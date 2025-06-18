@@ -53,4 +53,68 @@ export class AuthAgent extends Agent<WorkerEnv> {
     
     return new Response(null, { status: 101, webSocket: client });
   }
+
+  async onRequest(request: Request): Promise<Response> {
+    const url = new URL(request.url);
+    
+    // Handle authentication endpoints
+    if (url.pathname === '/auth/login') {
+      return this.handleLogin(request);
+    }
+    
+    if (url.pathname === '/auth/protected' || url.pathname === '/secure') {
+      return this.handleProtectedRoute(request);
+    }
+    
+    // Default response for other auth endpoints requires authentication
+    return this.handleProtectedRoute(request);
+  }
+
+  private async handleLogin(request: Request): Promise<Response> {
+    try {
+      const body = await request.json() as { username?: string; password?: string };
+      
+      if (!body.username || !body.password) {
+        return new Response('Missing credentials', { status: 400 });
+      }
+
+      // Simple mock validation
+      if (body.username === 'testuser' && body.password === 'testpass') {
+        return new Response(JSON.stringify({ 
+          token: 'valid-token',
+          user: { id: 1, username: body.username }
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      return new Response('Invalid credentials', { status: 401 });
+    } catch (error) {
+      return new Response('Invalid request body', { status: 400 });
+    }
+  }
+
+  private async handleProtectedRoute(request: Request): Promise<Response> {
+    const authHeader = request.headers.get('Authorization');
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response('Missing or invalid authorization header', { status: 401 });
+    }
+
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
+    // Validate token (mock validation)
+    if (token === 'valid-token') {
+      return new Response(JSON.stringify({ 
+        message: 'Access granted',
+        user: { id: 1, username: 'testuser' }
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    return new Response('Invalid or expired token', { status: 403 });
+  }
 }

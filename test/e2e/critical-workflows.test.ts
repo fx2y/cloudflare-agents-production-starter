@@ -46,7 +46,33 @@ vi.mock('agents', () => ({
         return new Response(JSON.stringify({ history: ['item1', 'item2'] }));
       }
       
-      // Auth endpoints
+      // Handle authentication endpoints
+      if (url.pathname === '/auth/login') {
+        if (method === 'POST') {
+          const body = await request.json();
+          if (body.username === 'testuser' && body.password === 'testpass') {
+            return new Response(JSON.stringify({ 
+              token: 'valid-token',
+              user: { id: 1, username: body.username }
+            }), { status: 200 });
+          }
+          return new Response('Invalid credentials', { status: 401 });
+        }
+      }
+      
+      if (url.pathname === '/auth/protected') {
+        const authHeader = request.headers.get('Authorization');
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+          return new Response('Missing authorization', { status: 401 });
+        }
+        const token = authHeader.substring(7);
+        if (token === 'valid-token') {
+          return new Response(JSON.stringify({ message: 'Access granted' }), { status: 200 });
+        }
+        return new Response('Invalid token', { status: 403 });
+      }
+      
+      // Auth endpoints fallback
       if (url.pathname.includes('/auth/')) {
         const authHeader = request.headers.get('Authorization');
         
@@ -71,7 +97,11 @@ vi.mock('agents', () => ({
     
     async onConnect(connection: any) {
       // Simulate connection establishment
-      connection.send(JSON.stringify({ type: 'connected', agentId: this.name }));
+      try {
+        connection.send(JSON.stringify({ type: 'connected', agentId: this.name }));
+      } catch (error) {
+        console.log('Connection failed during onConnect:', error.message);
+      }
     }
     
     async onMessage(connection: any, message: string) {

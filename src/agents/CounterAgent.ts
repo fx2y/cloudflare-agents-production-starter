@@ -17,7 +17,12 @@ export class CounterAgent extends Agent<WorkerEnv, CounterState> {
   initialState = { counter: 0 };
 
   async onConnect(connection: Connection): Promise<void> {
-    connection.send(JSON.stringify(this.state));
+    try {
+      connection.send(JSON.stringify(this.state));
+    } catch (error) {
+      console.error('CounterAgent onConnect error:', error);
+      // Don't throw - allow connection to be established even if initial send fails
+    }
   }
 
   async onMessage(connection: Connection, message: string): Promise<void> {
@@ -44,23 +49,43 @@ export class CounterAgent extends Agent<WorkerEnv, CounterState> {
     const command = validationResult.data;
     const value = command.value || 1;
     
-    switch (command.op) {
-      case 'increment':
-        const newIncrementValue = this.state.counter + value;
-        if (newIncrementValue > Number.MAX_SAFE_INTEGER) {
-          connection.send(JSON.stringify({ error: 'Counter would exceed maximum safe integer' }));
-          return;
-        }
-        this.setState({ counter: newIncrementValue });
-        break;
-      case 'decrement':
-        const newDecrementValue = this.state.counter - value;
-        if (newDecrementValue < Number.MIN_SAFE_INTEGER) {
-          connection.send(JSON.stringify({ error: 'Counter would go below minimum safe integer' }));
-          return;
-        }
-        this.setState({ counter: newDecrementValue });
-        break;
+    try {
+      switch (command.op) {
+        case 'increment':
+          const newIncrementValue = this.state.counter + value;
+          if (newIncrementValue > Number.MAX_SAFE_INTEGER) {
+            connection.send(JSON.stringify({ error: 'Counter would exceed maximum safe integer' }));
+            return;
+          }
+          this.setState({ counter: newIncrementValue });
+          try {
+            connection.send(JSON.stringify(this.state));
+          } catch (sendError) {
+            console.error('CounterAgent connection.send error:', sendError);
+            // Don't throw here - the operation succeeded, just couldn't notify
+          }
+          break;
+        case 'decrement':
+          const newDecrementValue = this.state.counter - value;
+          if (newDecrementValue < Number.MIN_SAFE_INTEGER) {
+            connection.send(JSON.stringify({ error: 'Counter would go below minimum safe integer' }));
+            return;
+          }
+          this.setState({ counter: newDecrementValue });
+          try {
+            connection.send(JSON.stringify(this.state));
+          } catch (sendError) {
+            console.error('CounterAgent connection.send error:', sendError);
+            // Don't throw here - the operation succeeded, just couldn't notify
+          }
+          break;
+      }
+    } catch (error) {
+      console.error('CounterAgent setState error:', error);
+      connection.send(JSON.stringify({ 
+        error: 'State update failed',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }));
     }
   }
 

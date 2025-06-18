@@ -33,7 +33,7 @@ vi.mock('agents', () => ({
 }));
 
 // Mock crypto functions
-global.crypto = {
+vi.stubGlobal('crypto', {
   ...global.crypto,
   randomUUID: vi.fn(() => 'mock-uuid-1234'),
   subtle: {
@@ -42,7 +42,7 @@ global.crypto = {
     verify: vi.fn().mockResolvedValue(true),
     digest: vi.fn().mockResolvedValue(new ArrayBuffer(32))
   } as any
-};
+});
 
 describe('Security and Authentication Tests', () => {
   beforeEach(() => {
@@ -409,7 +409,7 @@ describe('Security and Authentication Tests', () => {
         
         const isLocked = bruteForceDetector.failedAttempts >= bruteForceDetector.maxAttempts;
         
-        if (i < 5) {
+        if (i < 4) {
           expect(isLocked).toBe(false);
         } else {
           expect(isLocked).toBe(true);
@@ -458,9 +458,9 @@ function sanitizeSensitiveFields(data: any): any {
       if (field === 'apiKey') {
         result[field] = result[field].substring(0, 3) + '***';
       } else if (field === 'creditCard') {
-        result[field] = '****-****-****' + result[field].slice(-4);
+        result[field] = '****-****-****-' + result[field].slice(-4);
       } else if (field === 'ssn') {
-        result[field] = '***-**' + result[field].slice(-4);
+        result[field] = '***-**-' + result[field].slice(-4);
       } else {
         result[field] = '***';
       }

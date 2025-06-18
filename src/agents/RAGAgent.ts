@@ -17,7 +17,8 @@ export class RAGAgent extends Agent<WorkerEnv, RAGState> {
 
   async onStart() {
     this.sql`CREATE TABLE IF NOT EXISTS _meta (key TEXT PRIMARY KEY, value INTEGER)`;
-    const [{ value: version }] = this.sql`SELECT value FROM _meta WHERE key = 'version'` || [{ value: 0 }];
+    const result = this.sql`SELECT value FROM _meta WHERE key = 'version'`;
+    const version = result.length > 0 ? Number(result[0].value) : 0;
     
     if (version < 1) {
       this.sql`CREATE TABLE documents (
@@ -28,7 +29,8 @@ export class RAGAgent extends Agent<WorkerEnv, RAGState> {
       this.sql`INSERT INTO _meta (key, value) VALUES ('version', 1)`;
     }
 
-    const [{ count }] = this.sql`SELECT COUNT(*) as count FROM documents`;
+    const countResult = this.sql`SELECT COUNT(*) as count FROM documents`;
+    const count = countResult.length > 0 ? Number(countResult[0].count) : 0;
     this.setState({ documentCount: count });
   }
 
@@ -226,9 +228,10 @@ export class RAGAgent extends Agent<WorkerEnv, RAGState> {
 
     try {
       const startTime = Date.now();
-      const { data: [vector] } = await this.env.AI.run('@cf/baai/bge-base-en-v1.5', { 
+      const aiResult = await this.env.AI.run('@cf/baai/bge-base-en-v1.5', { 
         text: [content] 
       });
+      const vector = (aiResult as any).data?.[0] || [];
       const aiLatency = Date.now() - startTime;
 
       this.logger.logAiServiceCall({
@@ -242,10 +245,11 @@ export class RAGAgent extends Agent<WorkerEnv, RAGState> {
       });
 
       const vectorStartTime = Date.now();
+      const documentId = Number(id);
       await this.env.VECTOR_DB.insert([{
-        id: id.toString(),
+        id: documentId.toString(),
         values: vector,
-        metadata: { documentId: id }
+        metadata: { documentId: documentId.toString() }
       }]);
       const vectorLatency = Date.now() - vectorStartTime;
 

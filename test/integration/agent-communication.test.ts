@@ -110,6 +110,10 @@ describe('Agent Communication Integration Tests', () => {
       const agent1 = new CounterAgent(mockEnv, 'sync-agent-1');
       const agent2 = new CounterAgent(mockEnv, 'sync-agent-2');
       
+      // Initialize state
+      agent1.setState({ counter: 0 });
+      agent2.setState({ counter: 0 });
+      
       (agent1 as any).setupMockSql();
       (agent2 as any).setupMockSql();
       
@@ -126,15 +130,18 @@ describe('Agent Communication Integration Tests', () => {
         id: 'conn-2'
       };
       
-      // Both agents increment
+      // Agent 1 increments once, agent 2 increments twice
       await agent1.onMessage(mockConnection1 as any, JSON.stringify({ op: 'increment' }));
+      await agent2.onMessage(mockConnection2 as any, JSON.stringify({ op: 'increment' }));
       await agent2.onMessage(mockConnection2 as any, JSON.stringify({ op: 'increment' }));
       
       // Verify both operations succeeded
       expect(mockConnection1.send).toHaveBeenCalled();
       expect(mockConnection2.send).toHaveBeenCalled();
       
-      // Verify state isolation (each agent maintains its own state)
+      // Verify state isolation (agent1 should be 1, agent2 should be 2)
+      expect(agent1.state.counter).toBe(1);
+      expect(agent2.state.counter).toBe(2);
       expect(agent1.state.counter).not.toBe(agent2.state.counter);
     });
 

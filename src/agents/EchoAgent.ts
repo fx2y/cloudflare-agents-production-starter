@@ -1,9 +1,10 @@
 import { Agent } from "agents";
 import { Connection } from "partyserver";
+import type { WorkerEnv } from "../types";
 
 type WSMessage = string;
 
-export class EchoAgent extends Agent {
+export class EchoAgent extends Agent<WorkerEnv, {}> {
   async onConnect(connection: Connection) {
     console.log(`Connection ${connection.id} established.`);
     connection.send("Welcome!");
