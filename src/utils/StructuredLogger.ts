@@ -1,12 +1,12 @@
-export interface LogEvent {
-  timestamp: string;
+export interface StructuredLogEvent {
+  timestamp: string; // ISO8601Timestamp
+  level: "info" | "warn" | "error" | "debug";
   agentClass: string;
   agentId: string;
-  traceId?: string;
+  traceId: string;
   eventType: string;
-  level: 'info' | 'warn' | 'error';
   message: string;
-  data?: Record<string, any>;
+  data?: object;
 }
 
 export interface AiServiceMetrics {
@@ -23,22 +23,22 @@ export interface AiServiceMetrics {
 export class StructuredLogger {
   private agentClass: string;
   private agentId: string;
-  private traceId?: string;
+  private traceId: string;
 
   constructor(agentClass: string, agentId: string, traceId?: string) {
     this.agentClass = agentClass;
     this.agentId = agentId;
-    this.traceId = traceId;
+    this.traceId = traceId || StructuredLogger.generateTraceId();
   }
 
-  private log(level: LogEvent['level'], eventType: string, message: string, data?: Record<string, any>) {
-    const logEvent: LogEvent = {
+  private log(level: StructuredLogEvent['level'], eventType: string, message: string, data?: object) {
+    const logEvent: StructuredLogEvent = {
       timestamp: new Date().toISOString(),
+      level,
       agentClass: this.agentClass,
       agentId: this.agentId,
-      ...(this.traceId && { traceId: this.traceId }),
+      traceId: this.traceId,
       eventType,
-      level,
       message,
       ...(data && { data })
     };
@@ -46,16 +46,20 @@ export class StructuredLogger {
     console.log(JSON.stringify(logEvent));
   }
 
-  info(eventType: string, message: string, data?: Record<string, any>) {
+  info(eventType: string, message: string, data?: object) {
     this.log('info', eventType, message, data);
   }
 
-  warn(eventType: string, message: string, data?: Record<string, any>) {
+  warn(eventType: string, message: string, data?: object) {
     this.log('warn', eventType, message, data);
   }
 
-  error(eventType: string, message: string, data?: Record<string, any>) {
+  error(eventType: string, message: string, data?: object) {
     this.log('error', eventType, message, data);
+  }
+
+  debug(eventType: string, message: string, data?: object) {
+    this.log('debug', eventType, message, data);
   }
 
   logAiServiceCall(metrics: AiServiceMetrics) {

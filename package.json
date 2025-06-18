@@ -3,9 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "test": "vitest",
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
+    "start": "wrangler dev",
+    "test": "vitest",
+    "validate": "node scripts/validate-config.js",
     "register-agents": "node scripts/register-agents.js"
   },
   "devDependencies": {
