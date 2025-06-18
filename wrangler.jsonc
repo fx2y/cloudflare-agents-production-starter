@@ -112,6 +112,10 @@
       {
         "name": "SECRET_AGENT",
         "class_name": "SecretAgent"
+      },
+      {
+        "name": "WEBSOCKET_STREAMING_AGENT",
+        "class_name": "WebSocketStreamingAgent"
       }
     ]
   },
@@ -205,6 +209,12 @@
       "tag": "v9",
       "new_sqlite_classes": [
         "ChatHistoryAgent"
+      ]
+    },
+    {
+      "tag": "v10",
+      "new_sqlite_classes": [
+        "WebSocketStreamingAgent"
       ]
     }
   ]

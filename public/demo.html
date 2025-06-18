@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloudflare Agents Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .demo-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        .demo-section:last-child {
+            border-bottom: none;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status {
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .connected { color: #28a745; }
+        .disconnected { color: #dc3545; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <h1>Cloudflare Agents Client Demo</h1>
+
+    <div class="container">
+        <div class="demo-section">
+            <h2>Configuration</h2>
+            <label>Worker Host:</label>
+            <input type="text" id="host" value="localhost:8787" placeholder="your-worker.your-subdomain.workers.dev">
+            <label>Use Secure Connection (wss/https):</label>
+            <input type="checkbox" id="secure"> Check for production deployment
+        </div>
+
+        <div class="demo-section">
+            <h2>HTTP API Demo (agentFetch)</h2>
+            <label>Agent Name:</label>
+            <input type="text" id="httpAgentName" value="echo-agent" placeholder="echo-agent">
+            <label>Agent ID:</label>
+            <input type="text" id="httpAgentId" value="demo-123" placeholder="demo-123">
+            <button onclick="testHttpAgent()">Test HTTP Request</button>
+            <div class="status" id="httpStatus">Ready</div>
+            <div class="log" id="httpLog"></div>
+        </div>
+
+        <div class="demo-section">
+            <h2>WebSocket Demo (AgentClient)</h2>
+            <label>Agent Name:</label>
+            <input type="text" id="wsAgentName" value="websocket-streaming-agent" placeholder="websocket-streaming-agent">
+            <label>Agent ID:</label>
+            <input type="text" id="wsAgentId" value="demo-456" placeholder="demo-456">
+            <button onclick="connectWebSocket()">Connect</button>
+            <button onclick="disconnectWebSocket()" disabled id="disconnectBtn">Disconnect</button>
+            <div class="status" id="wsStatus">Disconnected</div>
+            
+            <label>Message to Send:</label>
+            <textarea id="wsMessage" placeholder="Tell me a short story about AI agents..." rows="3"></textarea>
+            <button onclick="sendMessage()" disabled id="sendBtn">Send Message</button>
+            <div class="log" id="wsLog"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import client utilities (this would work in a real environment with bundling)
+        // For this demo, we'll simulate the AgentClient and agentFetch APIs
+        
+        let wsConnection = null;
+        let hostInput = document.getElementById('host');
+        let secureInput = document.getElementById('secure');
+
+        function getConnectionOptions() {
+            return {
+                host: hostInput.value.trim(),
+                secure: secureInput.checked
+            };
+        }
+
+        function log(elementId, message) {
+            const logElement = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function clearLog(elementId) {
+            document.getElementById(elementId).textContent = '';
+        }
+
+        // HTTP API Demo
+        window.testHttpAgent = async function() {
+            clearLog('httpLog');
+            const status = document.getElementById('httpStatus');
+            status.textContent = 'Testing...';
+            
+            try {
+                const options = getConnectionOptions();
+                const agentName = document.getElementById('httpAgentName').value.trim();
+                const agentId = document.getElementById('httpAgentId').value.trim();
+                
+                if (!agentName || !agentId) {
+                    throw new Error('Agent name and ID are required');
+                }
+
+                const protocol = options.secure ? 'https' : 'http';
+                const url = `${protocol}://${options.host}/agent/${agentName}/${agentId}`;
+                
+                log('httpLog', `Making request to: ${url}`);
+                
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                log('httpLog', `Response status: ${response.status}`);
+                
+                if (response.ok) {
+                    const data = await response.text();
+                    log('httpLog', `Response: ${data}`);
+                    status.textContent = 'Success';
+                    status.className = 'status connected';
+                } else {
+                    log('httpLog', `Error: ${response.statusText}`);
+                    status.textContent = 'Failed';
+                    status.className = 'status error';
+                }
+            } catch (error) {
+                log('httpLog', `Error: ${error.message}`);
+                status.textContent = 'Error';
+                status.className = 'status error';
+            }
+        };
+
+        // WebSocket Demo
+        window.connectWebSocket = function() {
+            clearLog('wsLog');
+            const status = document.getElementById('wsStatus');
+            const connectBtn = document.querySelector('button[onclick="connectWebSocket()"]');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            
+            try {
+                const options = getConnectionOptions();
+                const agentName = document.getElementById('wsAgentName').value.trim();
+                const agentId = document.getElementById('wsAgentId').value.trim();
+                
+                if (!agentName || !agentId) {
+                    throw new Error('Agent name and ID are required');
+                }
+
+                const protocol = options.secure ? 'wss' : 'ws';
+                const url = `${protocol}://${options.host}/agent/${agentName}/${agentId}`;
+                
+                log('wsLog', `Connecting to: ${url}`);
+                
+                wsConnection = new WebSocket(url);
+                
+                wsConnection.onopen = function() {
+                    log('wsLog', 'Connected successfully');
+                    status.textContent = 'Connected';
+                    status.className = 'status connected';
+                    connectBtn.disabled = true;
+                    disconnectBtn.disabled = false;
+                    document.getElementById('sendBtn').disabled = false;
+                };
+                
+                wsConnection.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'chunk') {
+                            log('wsLog', `Chunk: ${data.content}`);
+                        } else if (data.type === 'done') {
+                            log('wsLog', 'Stream completed');
+                        } else {
+                            log('wsLog', `Message: ${JSON.stringify(data)}`);
+                        }
+                    } catch (e) {
+                        log('wsLog', `Raw message: ${event.data}`);
+                    }
+                };
+                
+                wsConnection.onclose = function(event) {
+                    log('wsLog', `Connection closed: ${event.code} - ${event.reason}`);
+                    status.textContent = 'Disconnected';
+                    status.className = 'status disconnected';
+                    connectBtn.disabled = false;
+                    disconnectBtn.disabled = true;
+                    document.getElementById('sendBtn').disabled = true;
+                    wsConnection = null;
+                };
+                
+                wsConnection.onerror = function(error) {
+                    log('wsLog', `WebSocket error: ${error.message}`);
+                    status.textContent = 'Error';
+                    status.className = 'status error';
+                };
+                
+            } catch (error) {
+                log('wsLog', `Connection error: ${error.message}`);
+                status.textContent = 'Error';
+                status.className = 'status error';
+            }
+        };
+
+        window.disconnectWebSocket = function() {
+            if (wsConnection) {
+                wsConnection.close(1000, 'User disconnected');
+            }
+        };
+
+        window.sendMessage = function() {
+            const message = document.getElementById('wsMessage').value.trim();
+            if (!message) {
+                log('wsLog', 'Please enter a message to send');
+                return;
+            }
+            
+            if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+                log('wsLog', `Sending: ${message}`);
+                wsConnection.send(message);
+                document.getElementById('wsMessage').value = '';
+            } else {
+                log('wsLog', 'WebSocket is not connected');
+            }
+        };
+
+        // Allow Enter key to send message
+        document.getElementById('wsMessage').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>

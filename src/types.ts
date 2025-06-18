@@ -22,6 +22,10 @@ import type { WebBrowserAgent } from './agents/WebBrowserAgent';
 import type { LoggingAgent } from './agents/LoggingAgent';
 import type { ChatHistoryAgent } from './agents/ChatHistoryAgent';
 import type { SecretAgent } from './agents/SecretAgent';
+import type { WebSocketStreamingAgent } from './agents/WebSocketStreamingAgent';
+import type { HITLAgent } from './agents/HITLAgent';
+import type { StatefulCalculatorAgent } from './agents/StatefulCalculatorAgent';
+import type { PersistentCounterAgent } from './agents/PersistentCounterAgent';
 
 export interface CounterState {
   counter: number;
@@ -71,6 +75,14 @@ export interface WorkerEnv {
   
   // Chat agents
   CHAT_HISTORY_AGENT: AgentNamespace<ChatHistoryAgent>;
+  
+  // Streaming agents
+  WEBSOCKET_STREAMING_AGENT: AgentNamespace<WebSocketStreamingAgent>;
+  
+  // Advanced agents
+  HITL_AGENT: AgentNamespace<HITLAgent>;
+  STATEFUL_CALCULATOR_AGENT: AgentNamespace<StatefulCalculatorAgent>;
+  PERSISTENT_COUNTER_AGENT: AgentNamespace<PersistentCounterAgent>;
   
   // AI services
   AI: Ai;

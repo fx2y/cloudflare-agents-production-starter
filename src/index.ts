@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { serveStatic } from 'hono/cloudflare-workers';
 import { jwt } from 'hono/jwt';
 import { getAgentByName } from 'agents';
 import { OAuthProvider } from '@cloudflare/workers-oauth-provider';
@@ -28,11 +29,13 @@ import { SecureMcpAgent } from './agents/SecureMcpAgent';
 import { LoggingAgent } from './agents/LoggingAgent';
 import { ChatHistoryAgent } from './agents/ChatHistoryAgent';
 import { SecretAgent } from './agents/SecretAgent';
+import { WebSocketStreamingAgent } from './agents/WebSocketStreamingAgent';
 import { handleAuthDefault } from './auth-handler';
 export type { WorkerEnv } from './types';
 import type { WorkerEnv, BrowserRequestPayload } from './types';
 
 const app = new Hono<{ Bindings: WorkerEnv }>();
+const apiV1 = new Hono<{ Bindings: WorkerEnv }>();
 
 // Trace ID middleware for request correlation
 app.use('*', async (c, next) => {
@@ -234,6 +237,9 @@ app.all('/agent/chat-history-agent/:id/*', createAgentRoute('CHAT_HISTORY_AGENT'
 
 // Route for secret agent test
 app.get('/secret-agent/:id', createAgentRoute('SECRET_AGENT', SecretAgent));
+
+// WebSocket Streaming agent route
+app.get('/agent/websocket-streaming-agent/:id', createAgentRoute('WEBSOCKET_STREAMING_AGENT', WebSocketStreamingAgent, true));
 // Tool agents
 app.post('/tool/github/:owner/:repo', async (c) => {
   const owner = c.req.param('owner');
@@ -257,6 +263,15 @@ app.post('/tool/browser/title', async (c) => {
     ? c.json({ title })
     : c.json({ error: "Failed to retrieve page title." }, 500);
 });
+
+// Prefixed API routes (v1 namespace)
+apiV1.get('/echo-agent/:id', createAgentRoute('ECHO_AGENT', EchoAgent, true));
+apiV1.get('/counter-agent/:id', createAgentRoute('COUNTER_AGENT', CounterAgent, true));
+apiV1.get('/chatty-agent/:id', createAgentRoute('CHATTY_AGENT', ChattyAgent, true));
+app.route('/api/v1', apiV1);
+
+// Static file serving for demo page
+app.get('/demo', serveStatic({ path: './demo.html' }));
 
 app.notFound((c) => {
   return new Response("Not Found", { status: 404 });
@@ -323,3 +338,4 @@ export { SecureMcpAgent } from './agents/SecureMcpAgent';
 export { LoggingAgent } from './agents/LoggingAgent';
 export { ChatHistoryAgent } from './agents/ChatHistoryAgent';
 export { SecretAgent } from './agents/SecretAgent';
+export { WebSocketStreamingAgent } from './agents/WebSocketStreamingAgent';
