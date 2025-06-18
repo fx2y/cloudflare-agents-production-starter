@@ -108,12 +108,22 @@
       {
         "name": "CHAT_HISTORY_AGENT",
         "class_name": "ChatHistoryAgent"
+      },
+      {
+        "name": "SECRET_AGENT",
+        "class_name": "SecretAgent"
       }
     ]
   },
   "ai": {
     "binding": "AI"
   },
+  "vectorize": [
+    {
+      "binding": "VECTOR_DB",
+      "index_name": "my-rag-index"
+    }
+  ],
   "browser": {
     "binding": "BROWSER"
   },
@@ -187,7 +197,8 @@
         "StatefulCalculatorAgent",
         "PersistentCounterAgent",
         "SecureMcpAgent",
-        "LoggingAgent"
+        "LoggingAgent",
+        "SecretAgent"
       ]
     },
     {

@@ -21,6 +21,7 @@ import type { GitHubAgent } from './agents/GitHubAgent';
 import type { WebBrowserAgent } from './agents/WebBrowserAgent';
 import type { LoggingAgent } from './agents/LoggingAgent';
 import type { ChatHistoryAgent } from './agents/ChatHistoryAgent';
+import type { SecretAgent } from './agents/SecretAgent';
 
 export interface CounterState {
   counter: number;
@@ -66,6 +67,7 @@ export interface WorkerEnv {
   GITHUB_AGENT: AgentNamespace<GitHubAgent>;
   BROWSER_AGENT: AgentNamespace<WebBrowserAgent>;
   LOGGING_AGENT: AgentNamespace<LoggingAgent>;
+  SECRET_AGENT: AgentNamespace<SecretAgent>;
   
   // Chat agents
   CHAT_HISTORY_AGENT: AgentNamespace<ChatHistoryAgent>;
@@ -81,6 +83,7 @@ export interface WorkerEnv {
   EMAIL_WORKFLOW: any;
   OPENAI_API_KEY: string;
   GITHUB_API_TOKEN: string;
+  MY_LOCAL_SECRET: string;
 }
 
 export interface GitHubRepoDTO {

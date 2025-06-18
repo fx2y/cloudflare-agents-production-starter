@@ -27,6 +27,7 @@ import { PersistentCounterAgent } from './agents/PersistentCounterAgent';
 import { SecureMcpAgent } from './agents/SecureMcpAgent';
 import { LoggingAgent } from './agents/LoggingAgent';
 import { ChatHistoryAgent } from './agents/ChatHistoryAgent';
+import { SecretAgent } from './agents/SecretAgent';
 import { handleAuthDefault } from './auth-handler';
 export type { WorkerEnv } from './types';
 import type { WorkerEnv, BrowserRequestPayload } from './types';
@@ -231,6 +232,8 @@ app.get('/agent/logging/:id', createAgentRoute('LOGGING_AGENT', LoggingAgent));
 // Chat History agent routes
 app.all('/agent/chat-history-agent/:id/*', createAgentRoute('CHAT_HISTORY_AGENT', ChatHistoryAgent));
 
+// Route for secret agent test
+app.get('/secret-agent/:id', createAgentRoute('SECRET_AGENT', SecretAgent));
 // Tool agents
 app.post('/tool/github/:owner/:repo', async (c) => {
   const owner = c.req.param('owner');
@@ -264,8 +267,29 @@ app.onError((err, c) => {
   return new Response("Internal Server Error", { status: 500 });
 });
 
-// Temporarily disabled OAuth Provider for testing
-// TODO: Fix OAuth provider configuration
+// OAuth Provider temporarily disabled for testing
+// const oauthProvider = new OAuthProvider({
+//   apiHandlers: {
+//     '/sse': SecureMcpAgent.serveSSE('/sse'),
+//     '/mcp': SecureMcpAgent.serve('/mcp'),
+//   },
+//   defaultHandler: handleAuthDefault,
+//   authorizeEndpoint: "/authorize",
+//   tokenEndpoint: "/token",
+//   scopes: {
+//     'mcp:read': 'Read-only access to MCP tools',
+//     'mcp:write': 'Full access to MCP tools',
+//     'tools:echo': 'Access to echo tool',
+//     'tools:time': 'Access to time tool',
+//     'tools:info': 'Access to server info tool',
+//     'admin': 'Administrative access to all tools'
+//   }
+// });
+
+// Simple routes for testing
+app.get('/', (c) => {
+  return c.text('Cloudflare Agents Development Server');
+});
 
 // Main export - simplified with proper Hono routing
 export default app;
@@ -298,3 +322,4 @@ export { PersistentCounterAgent } from './agents/PersistentCounterAgent';
 export { SecureMcpAgent } from './agents/SecureMcpAgent';
 export { LoggingAgent } from './agents/LoggingAgent';
 export { ChatHistoryAgent } from './agents/ChatHistoryAgent';
+export { SecretAgent } from './agents/SecretAgent';
