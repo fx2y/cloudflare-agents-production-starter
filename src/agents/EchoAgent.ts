@@ -18,7 +18,13 @@ export class EchoAgent extends Agent<WorkerEnv, {}> {
     console.log(`Connection ${connection.id} closed: ${reason}`);
   }
 
-  async onError(connection: Connection, error: Error) {
-    console.error(`Error on connection ${connection.id}:`, error);
+  async onError(connection: Connection, error: unknown): Promise<void>;
+  async onError(error: unknown): Promise<void>;
+  async onError(connectionOrError: Connection | unknown, error?: unknown): Promise<void> {
+    if (connectionOrError && typeof connectionOrError === 'object' && 'id' in connectionOrError) {
+      console.error(`Error on connection ${connectionOrError.id}:`, error);
+    } else {
+      console.error('Agent error:', connectionOrError);
+    }
   }
 }

@@ -56,11 +56,11 @@ export class StatefulCalculatorAgent extends McpAgent {
         const { value } = schema.parse(params);
         
         // Update the ephemeral session state
-        const newTotal = this.state.total + value;
+        const newTotal = (this.state as CalculatorState).total + value;
         this.setState({
           ...this.state,
           total: newTotal
-        });
+        } as CalculatorState);
         
         return {
           content: [
@@ -86,7 +86,7 @@ export class StatefulCalculatorAgent extends McpAgent {
         this.setState({
           ...this.state,
           total: 0
-        });
+        } as CalculatorState);
         
         return {
           content: [
@@ -113,7 +113,7 @@ export class StatefulCalculatorAgent extends McpAgent {
           content: [
             {
               type: 'text',
-              text: `Current total: ${this.state.total}`
+              text: `Current total: ${(this.state as CalculatorState).total}`
             }
           ]
         };
@@ -137,7 +137,7 @@ export class StatefulCalculatorAgent extends McpAgent {
       jsonrpc: '2.0',
       method: 'notifications/initialized',
       params: {
-        message: `Welcome to Stateful Calculator! Your current total is: ${this.state.total}`
+        message: `Welcome to Stateful Calculator! Your current total is: ${(this.state as CalculatorState).total}`
       }
     }));
   }

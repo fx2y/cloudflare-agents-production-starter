@@ -1,0 +1,260 @@
+/* Modern CSS for the demo application */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f8fafc;
+  color: #1a202c;
+  line-height: 1.6;
+}
+
+.container {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+  border: 1px solid #e2e8f0;
+}
+
+.demo-section {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.demo-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+h1 {
+  color: #2d3748;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+h2 {
+  color: #4a5568;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+h3 {
+  color: #2d3748;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+h4 {
+  color: #4a5568;
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+/* Form Controls */
+button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-right: 8px;
+  margin-bottom: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+button:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Configuration Panel */
+.config-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.config-row label {
+  min-width: 60px;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.config-row input[type="checkbox"] {
+  width: auto;
+  margin-right: 8px;
+}
+
+/* WebSocket Demo */
+.websocket-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto auto;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.message-controls {
+  margin-bottom: 24px;
+}
+
+.message-controls textarea {
+  margin-bottom: 12px;
+}
+
+/* HTTP Demo */
+.http-controls {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.request-body {
+  margin-bottom: 16px;
+}
+
+.http-actions {
+  margin-bottom: 24px;
+}
+
+/* Messages and Response Areas */
+.messages-container, .response-container {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.message {
+  margin-bottom: 12px;
+  padding: 8px;
+  border-radius: 6px;
+  border-left: 4px solid;
+}
+
+.message-sent {
+  background: #f0fff4;
+  border-left-color: #38a169;
+}
+
+.message-received {
+  background: #ebf8ff;
+  border-left-color: #3182ce;
+}
+
+.message-system {
+  background: #fffbeb;
+  border-left-color: #d69e2e;
+}
+
+.message-error {
+  background: #fed7d7;
+  border-left-color: #e53e3e;
+}
+
+.timestamp {
+  color: #718096;
+  font-size: 11px;
+}
+
+.type {
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.content {
+  margin: 4px 0 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  body {
+    padding: 12px;
+  }
+  
+  .container {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .websocket-controls {
+    grid-template-columns: 1fr;
+  }
+  
+  .http-controls {
+    grid-template-columns: 1fr;
+  }
+  
+  .config-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .config-row label {
+    min-width: auto;
+  }
+}
+
+/* Utility Classes */
+.text-center {
+  text-align: center;
+}
+
+.mb-4 {
+  margin-bottom: 16px;
+}
+
+.mt-4 {
+  margin-top: 16px;
+}
+
+.hidden {
+  display: none;
+}

@@ -25,7 +25,7 @@ export class HITLAgent extends Agent<any, HITLState> {
     
     if (request.method === "POST" && url.pathname.endsWith("/execute-transaction")) {
       try {
-        const { data } = await request.json();
+        const { data } = await request.json() as any;
         return await this.executeTransaction(data);
       } catch (error) {
         return new Response("Invalid JSON", { status: 400 });
@@ -56,7 +56,7 @@ export class HITLAgent extends Agent<any, HITLState> {
   }
 
   private async generateSecureInterventionUrl(): Promise<string> {
-    const secret = this.env.INTERVENTION_JWT_SECRET || "fallback-dev-secret";
+    const secret = (this.env as any).INTERVENTION_JWT_SECRET || "fallback-dev-secret";
     const encoder = new TextEncoder();
     const secretKey = encoder.encode(secret);
 
@@ -70,20 +70,20 @@ export class HITLAgent extends Agent<any, HITLState> {
       .setIssuedAt()
       .sign(secretKey);
 
-    const baseUrl = this.env.DOMAIN ? `https://${this.env.DOMAIN}` : 'http://localhost:8787';
+    const baseUrl = (this.env as any).DOMAIN ? `https://${(this.env as any).DOMAIN}` : 'http://localhost:8787';
     return `${baseUrl}/intervention?token=${token}`;
   }
 
   async verifyInterventionToken(token: string): Promise<{ agentId: string } | null> {
     try {
-      const secret = this.env.INTERVENTION_JWT_SECRET || "fallback-dev-secret";
+      const secret = (this.env as any).INTERVENTION_JWT_SECRET || "fallback-dev-secret";
       const encoder = new TextEncoder();
       const secretKey = encoder.encode(secret);
 
       const { payload } = await jwtVerify(token, secretKey);
       
-      if (payload.purpose === "intervention" && payload.agentId === this.name) {
-        return { agentId: payload.agentId as string };
+      if ((payload as any).purpose === "intervention" && (payload as any).agentId === this.name) {
+        return { agentId: (payload as any).agentId as string };
       }
       
       return null;

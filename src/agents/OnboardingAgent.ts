@@ -20,7 +20,7 @@ export class OnboardingAgent extends Agent<WorkerEnv> {
 
     if (method === 'POST' && url.pathname.endsWith('/start')) {
       try {
-        const body = await request.json();
+        const body = await request.json() as any;
         const { userId } = body;
 
         if (!userId || typeof userId !== 'string') {
@@ -48,7 +48,7 @@ export class OnboardingAgent extends Agent<WorkerEnv> {
 
   async startOnboarding(userId: string): Promise<Response> {
     try {
-      const instance = await this.env.EMAIL_WORKFLOW.create({
+      const instance = await (this.env as any).EMAIL_WORKFLOW.create({
         id: `onboarding-${userId}`,
         params: { userId }
       });

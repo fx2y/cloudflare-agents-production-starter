@@ -175,7 +175,7 @@ export class OAuthMcpWrapper extends Agent<WorkerEnv, OAuthState> {
         message: 'Authentication successful'
       }));
 
-      await this.wrappedAgent.onConnect?.(connection);
+      await this.wrappedAgent.onConnect?.(connection, {} as any);
     } catch (error) {
       connection.send(JSON.stringify({
         type: 'auth_error',

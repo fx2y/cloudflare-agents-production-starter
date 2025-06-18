@@ -5,10 +5,10 @@ interface ChatState {
   userCount: number;
 }
 
-export class ResilientChatAgent extends Agent<WorkerEnv> {
+export class ResilientChatAgent extends Agent<WorkerEnv, ChatState> {
   constructor(context: any, env: WorkerEnv) {
     super(context, env);
-    this.state = { userCount: 0 };
+    this.setState({ userCount: 0 });
   }
 
   async onConnect(connection: Connection) {
@@ -22,7 +22,7 @@ export class ResilientChatAgent extends Agent<WorkerEnv> {
 
   async onMessage(connection: Connection, message: string) {
     try {
-      const data = JSON.parse(message);
+      const data = JSON.parse(message) as { command?: string; message?: string };
       
       if (data.command === 'force_error') {
         connection.close(1011, 'Internal server error');

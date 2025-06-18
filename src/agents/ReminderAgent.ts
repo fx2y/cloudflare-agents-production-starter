@@ -15,7 +15,7 @@ export class ReminderAgent extends Agent<WorkerEnv> {
 
     if (method === 'POST' && url.pathname.endsWith('/set')) {
       try {
-        const body = await request.json();
+        const body = await request.json() as any;
         const { message, delaySeconds = 10, failFor = 0 } = body;
 
         if (!message || typeof message !== 'string') {

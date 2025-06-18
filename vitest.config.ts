@@ -5,11 +5,16 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    exclude: ['**/node_modules/**', '**/dist/**', '**/.{idea,git,cache,output,temp}/**'],
-    pool: 'forks',
+    exclude: [
+      '**/node_modules/**', 
+      '**/dist/**', 
+      '**/.{idea,git,cache,output,temp}/**',
+      'test/unit/**' // Exclude unit tests that need Cloudflare runtime
+    ],
+    pool: '@cloudflare/vitest-pool-workers',
     poolOptions: {
-      forks: {
-        isolate: true
+      workers: {
+        wrangler: { configPath: './wrangler.jsonc' }
       }
     }
   },

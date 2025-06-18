@@ -78,8 +78,8 @@ export class RoutingAgent extends Agent<WorkerEnv, RoutingState> {
         success: true
       });
 
-      const sentiment = response.label?.toLowerCase();
-      const confidence = response.score || 0;
+      const sentiment = (response as any).label?.toLowerCase();
+      const confidence = (response as any).score || 0;
 
       if (confidence < 0.6) {
         this.logger.info('routing.classification.low_confidence', 'Low confidence classification, using fallback', { 
@@ -96,7 +96,7 @@ export class RoutingAgent extends Agent<WorkerEnv, RoutingState> {
         return {
           intent: 'get_weather',
           entities: {
-            location: locationMatch?.[1]?.trim() || null,
+            location: locationMatch?.[1]?.trim(),
             original_prompt: prompt
           }
         };
@@ -133,7 +133,7 @@ export class RoutingAgent extends Agent<WorkerEnv, RoutingState> {
       return {
         intent: 'get_weather',
         entities: {
-          location: locationMatch?.[1]?.trim() || null,
+          location: locationMatch?.[1]?.trim(),
           original_prompt: prompt
         }
       };
@@ -207,7 +207,7 @@ export class RoutingAgent extends Agent<WorkerEnv, RoutingState> {
         throw new Error(`AI Gateway request failed: ${response.status}`);
       }
 
-      const result = await response.json();
+      const result = await response.json() as any;
       const responseContent = result.choices?.[0]?.message?.content || 'I apologize, but I couldn\'t process that request at the moment.';
       const tokenCount = prompt.split(' ').length + responseContent.split(' ').length;
 

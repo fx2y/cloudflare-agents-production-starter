@@ -264,7 +264,7 @@ export class RAGAgent extends Agent<WorkerEnv, RAGState> {
       const newCount = this.state.documentCount + 1;
       this.setState({ documentCount: newCount });
 
-      return id;
+      return Number(id);
     } catch (error) {
       this.logger.error('rag.ingest.failed', 'Failed to create vector embedding', { 
         documentId: id, 
@@ -278,9 +278,10 @@ export class RAGAgent extends Agent<WorkerEnv, RAGState> {
   async queryKnowledge(userQuery: string): Promise<{ context: string; sources: Array<{ id: number }> }> {
     try {
       const startTime = Date.now();
-      const { data: [queryVector] } = await this.env.AI.run('@cf/baai/bge-base-en-v1.5', { 
+      const aiResult = await this.env.AI.run('@cf/baai/bge-base-en-v1.5', { 
         text: [userQuery] 
       });
+      const queryVector = (aiResult as any).data?.[0] || [];
       const aiLatency = Date.now() - startTime;
 
       this.logger.logAiServiceCall({
@@ -308,7 +309,9 @@ export class RAGAgent extends Agent<WorkerEnv, RAGState> {
         success: true
       });
 
-      const ids = vectorMatches.matches.map(match => match.metadata?.documentId).filter(Boolean);
+      const ids = vectorMatches.matches
+        .map(match => match.metadata?.documentId)
+        .filter((id): id is string => Boolean(id));
       
       if (ids.length === 0) {
         this.logger.info('rag.query.no_matches', 'No vector matches found for query');
@@ -330,7 +333,7 @@ export class RAGAgent extends Agent<WorkerEnv, RAGState> {
       }
 
       const context = results.map(r => r.content).join('\n\n');
-      const sources = results.map(r => ({ id: r.id }));
+      const sources = results.map(r => ({ id: Number(r.id) }));
 
       this.logger.info('rag.query.completed', 'Query completed successfully', { 
         matchCount: vectorMatches.matches.length,
@@ -357,9 +360,10 @@ export class RAGAgent extends Agent<WorkerEnv, RAGState> {
     try {
       this.sql`UPDATE documents SET content = ${newContent} WHERE id = ${documentId}`;
 
-      const { data: [vector] } = await this.env.AI.run('@cf/baai/bge-base-en-v1.5', { 
+      const aiResult = await this.env.AI.run('@cf/baai/bge-base-en-v1.5', { 
         text: [newContent] 
       });
+      const vector = (aiResult as any).data?.[0] || [];
 
       await this.env.VECTOR_DB.upsert([{
         id: documentId.toString(),

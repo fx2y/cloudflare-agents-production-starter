@@ -84,7 +84,7 @@ export class SecureMcpAgent extends McpAgent {
         const info = {
           agentId: this.name,
           serverTime: new Date().toISOString(),
-          environment: this.env.ENVIRONMENT || 'development'
+          environment: (this.env as any).ENVIRONMENT || 'development'
         };
         
         return {

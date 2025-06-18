@@ -36,8 +36,8 @@ import { handleAuthDefault } from './auth-handler';
 export type { WorkerEnv } from './types';
 import type { WorkerEnv, BrowserRequestPayload } from './types';
 
-const app = new Hono<{ Bindings: WorkerEnv }>();
-const apiV1 = new Hono<{ Bindings: WorkerEnv }>();
+const app = new Hono<{ Bindings: WorkerEnv; Variables: { traceId: string } }>();
+const apiV1 = new Hono<{ Bindings: WorkerEnv; Variables: { traceId: string } }>();
 
 // Trace ID middleware for request correlation
 app.use('*', async (c, next) => {
@@ -49,7 +49,7 @@ app.use('*', async (c, next) => {
 
 // Auth Gateway Middleware - JWT-based
 app.use('/api/secure/*', jwt({
-  secret: async (c) => c.env.JWT_SECRET,
+  secret: (c: any): Promise<string> => Promise.resolve(c.env.JWT_SECRET),
   alg: 'HS256'
 }));
 
@@ -128,23 +128,28 @@ async function setupWebSocket<T>(
   });
 }
 
-function createAgentRoute<T>(agentBindingKey: keyof WorkerEnv, agentClass: new (...args: any[]) => T, supportWebSocket = false) {
+function createAgentRoute(agentBindingKey: keyof WorkerEnv, agentClass: any, supportWebSocket = false) {
   return async (c: any) => {
     const agentId = c.req.param('id');
-    const traceId = c.get('traceId');
+    const traceId = c.get('traceId') as string;
     
     if (supportWebSocket && c.req.header('upgrade') === 'websocket') {
       return setupWebSocket(c.env, c.env[agentBindingKey], agentId, agentClass, traceId);
     }
     
-    const agent = await getAgentByName<WorkerEnv, T>(c.env[agentBindingKey], agentId);
+    const agentNamespace = c.env[agentBindingKey] as any;
+    const agentStub = agentNamespace.get(agentNamespace.idFromName(agentId));
     
     // Pass traceId to agent if it supports it
-    if (typeof (agent as any).setTraceId === 'function') {
-      (agent as any).setTraceId(traceId);
-    }
+    const headers = new Headers(c.req.raw.headers);
+    headers.set('x-trace-id', traceId);
+    const requestWithTrace = new Request(c.req.raw.url, {
+      method: c.req.raw.method,
+      headers,
+      body: c.req.raw.body
+    });
     
-    return agent.onRequest(c.req.raw);
+    return agentStub.fetch(requestWithTrace);
   };
 }
 
@@ -280,7 +285,8 @@ apiV1.get('/chatty-agent/:id', createAgentRoute('CHATTY_AGENT', ChattyAgent, tru
 app.route('/api/v1', apiV1);
 
 // Static file serving for demo page
-app.get('/demo', serveStatic({ path: './demo.html' }));
+app.get('/demo/*', serveStatic({ path: './dist', manifest: {} }));
+app.get('/demo', serveStatic({ path: './dist/index.html', manifest: {} }));
 
 app.notFound((c) => {
   return new Response("Not Found", { status: 404 });
